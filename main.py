@@ -47,7 +47,7 @@ def same_image(img, path, time):
     Image.fromarray(img).save(f"{path}/{time}.png")
 
 
-def parse_ros_bag(bag_file, save_dir):
+def parse_ros_bag(bag_file, save_dir, redundancy):
     with rosbag.Bag(bag_file, 'r') as bag_to_read:
         rgb_gen = bag_to_read.read_messages(topics=Topics.rgb())
         depth_gen = bag_to_read.read_messages(topics=Topics.aligned_depth())
@@ -59,7 +59,16 @@ def parse_ros_bag(bag_file, save_dir):
         depth_dir = f"./{save_dir}/depth"
         Path(rgb_dir).mkdir(parents=True, exist_ok=True)
         Path(depth_dir).mkdir(parents=True, exist_ok=True)
+        i = 0
         for rgb, depth, depth_info, info in tqdm(zip(rgb_gen, depth_gen, depth_info_gen, info_gen)):
+            if i != 0:
+                if i >= redundancy:
+                    i = 0
+                else:
+                    i += 1
+                continue
+            else:
+                i += 1
 
             assert depth_info.message.D == info.message.D
             assert depth_info.message.K == info.message.K
@@ -82,10 +91,12 @@ if __name__ == '__main__':
     parser = ArgumentParser(description='Process rosbag files')
     parser.add_argument('-b', help='rosbag file to process')
     parser.add_argument('-d', help='dataset name')
+    parser.add_argument('-r', help='redundancy (int)')
 
     args = parser.parse_args()
     bag_file_path = Path(args.b)
     save_dir = Path(args.d)
+    redundancy = int(args.r)
 
-    parse_ros_bag(bag_file_path, save_dir)
+    parse_ros_bag(bag_file_path, save_dir, redundancy)
     print("Done!")
