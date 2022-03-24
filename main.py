@@ -91,7 +91,7 @@ if __name__ == '__main__':
     parser = ArgumentParser(description='Process rosbag files')
     parser.add_argument('-b', help='rosbag file to process')
     parser.add_argument('-d', help='dataset name')
-    parser.add_argument('-r', help='redundancy (int)')
+    parser.add_argument('-r', default=0, help='redundancy (int)')
 
     args = parser.parse_args()
     bag_file_path = Path(args.b)
